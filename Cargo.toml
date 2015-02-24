@@ -1,0 +1,5 @@
+[package]
+
+name = "vbp"
+version = "0.0.1"
+authors = ["Don Petersen <don@donpetersen.net>"]

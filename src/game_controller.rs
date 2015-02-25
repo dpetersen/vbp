@@ -18,14 +18,15 @@ const PADDLE_WALL_PADDING: i32 = 10;
 const BALL_COLOR: Color = SOULLESS_GREY;
 const BALL_BREADTH: i32 = 8;
 const BALL_VELOCITY: f64 = 10.0;
-const BALL_INITIAL_ANGLE_DEGREES: i32 = 45;
-const BALL_START_POSITION: (i32, i32) = (800 / 2 - BALL_BREADTH / 2, 600 / 2 - BALL_BREADTH / 2);
 
 const SCORE_TOP_PADDING: i32 = 10;
 const SCORE_COLOR: Color = SOULLESS_GREY;
 const SCORE_FONT_SIZE: isize = 64;
 
 pub struct GameController {
+    window_width: i32,
+    window_height: i32,
+
     score_font: Font,
 
     ball_position: (i32, i32),
@@ -39,19 +40,29 @@ pub struct GameController {
 }
 
 impl GameController {
-    pub fn new() -> GameController {
+    pub fn new(window_width: i32, window_height: i32) -> GameController {
         let score_font_path = &Path::new("art/alterebro-pixel-font.ttf");
         let score_font = Font::from_file(score_font_path, SCORE_FONT_SIZE).unwrap();
 
         return GameController{
+            window_width: window_width,
+            window_height: window_height,
             score_font: score_font,
-            ball_position: BALL_START_POSITION,
-            ball_angle: (BALL_INITIAL_ANGLE_DEGREES as f64).to_radians(),
+            ball_position: (0, 0),
+            ball_angle: 0.0,
             player_paddle_y: 280,
             opponent_paddle_y: 10,
             player_score: 0,
             opponent_score: 0
         }
+    }
+
+    pub fn restart_game(&mut self) {
+        self.ball_position = (
+            self.window_width / 2 - BALL_BREADTH / 2,
+            self.window_height / 2 - BALL_BREADTH / 2
+        );
+        self.ball_angle = 45.0.to_radians();
     }
 
     pub fn tick(&mut self, _: &Event, renderer: &Renderer, drawer: &mut RenderDrawer) {
@@ -67,7 +78,7 @@ impl GameController {
     fn move_player_paddle(&mut self) {
         let (_, _, mut y) = mouse::get_mouse_state();
         if y < 0 { y = 0; }
-        else if y + PADDLE_HEIGHT > 600 { y = 600 - PADDLE_HEIGHT; }
+        else if y + PADDLE_HEIGHT > self.window_height { y = self.window_height - PADDLE_HEIGHT; }
 
         self.player_paddle_y = y;
     }
@@ -89,7 +100,7 @@ impl GameController {
         y += y_change;
 
         // Wall collision
-        let upper_y_limit = 600 - BALL_BREADTH;
+        let upper_y_limit = self.window_height - BALL_BREADTH;
         if y > upper_y_limit || y < 0 { self.ball_angle *= -1.0 }
         if y > upper_y_limit { y = upper_y_limit; }
         else if y < 0 { y = 0; }
@@ -101,7 +112,7 @@ impl GameController {
         // still count as a miss. Any part of the ball on the paddle should probably be a save.
         let player_paddle_x = PADDLE_WALL_PADDING + PADDLE_WIDTH;
         let player_paddle_impacted = x <= player_paddle_x && y >= self.player_paddle_y && y <= self.player_paddle_y + PADDLE_HEIGHT;
-        let opponent_paddle_x = 800 - PADDLE_WALL_PADDING - PADDLE_WIDTH - BALL_BREADTH;
+        let opponent_paddle_x = self.window_width - PADDLE_WALL_PADDING - PADDLE_WIDTH - BALL_BREADTH;
         let opponent_paddle_impacted = x >= opponent_paddle_x && y >= self.opponent_paddle_y && y <= self.opponent_paddle_y + PADDLE_HEIGHT;
 
         // Reflect and tweak ball position.
@@ -115,15 +126,14 @@ impl GameController {
             if x < player_paddle_x { self.opponent_score += 1; }
             else if x > opponent_paddle_x { self.player_score += 1; }
 
-            self.ball_position = BALL_START_POSITION;
-            self.ball_angle = 45.0.to_radians();
+            self.restart_game();
         } else {
             self.ball_position = (x, y);
         }
     }
 
     fn draw_scores(&self, r: &Renderer, d: &mut RenderDrawer) {
-        let third = 800 / 3;
+        let third = self.window_width / 3;
         self.draw_score(r, d, self.opponent_score, third);
         self.draw_score(r, d, self.player_score, third * 2);
     }
@@ -141,7 +151,7 @@ impl GameController {
     }
 
     fn draw_opponent(&self, d: &mut RenderDrawer) {
-        self.draw_box(d, 800 - PADDLE_WIDTH - PADDLE_WALL_PADDING, self.opponent_paddle_y);
+        self.draw_box(d, self.window_width - PADDLE_WIDTH - PADDLE_WALL_PADDING, self.opponent_paddle_y);
     }
 
     fn draw_box(&self, d: &mut RenderDrawer, x: i32, y: i32) {

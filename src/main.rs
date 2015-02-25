@@ -11,14 +11,17 @@ extern crate sdl2_ttf;
 
 pub mod game_controller;
 
+const WINDOW_DIMENSIONS: (i32, i32) = (800, 600);
+
 fn main() {
     sdl2::init(sdl2::INIT_VIDEO);
     sdl2_ttf::init();
 
+    let (w, h) = WINDOW_DIMENSIONS;
     let window = video::Window::new(
         "VBP",
         video::WindowPos::PosCentered, video::WindowPos::PosCentered,
-        800, 600,
+        w, h,
         video::SHOWN
     ).unwrap();
 
@@ -27,7 +30,8 @@ fn main() {
         render::ACCELERATED | render::PRESENTVSYNC
     ).unwrap();
 
-    let mut gc = GameController::new();
+    let mut gc = GameController::new(w, h);
+    gc.restart_game();
     let mut d = renderer.drawer();
     let background_color = Color::RGB(0, 0, 0);
 

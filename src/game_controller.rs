@@ -2,6 +2,7 @@ use std::num::Float;
 use std::f64::consts::PI;
 
 use sdl2::event::Event;
+use sdl2::mouse;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::render::RenderDrawer;
@@ -13,8 +14,8 @@ static PADDLE_WALL_PADDING: i32 = 10;
 
 static BALL_COLOR: Color = Color::RGB(175, 175, 175);
 static BALL_BREADTH: i32 = 8;
-static BALL_VELOCITY: f64 = 15.0;
-static BALL_INITIAL_ANGLE_DEGREES: i32 = 0;
+static BALL_VELOCITY: f64 = 10.0;
+static BALL_INITIAL_ANGLE_DEGREES: i32 = 45;
 
 pub struct GameController {
     ball_position: (i32, i32),
@@ -34,10 +35,16 @@ impl GameController {
     }
 
     pub fn tick(&mut self, _: &Event, drawer: &mut RenderDrawer) {
+        self.move_player_paddle();
         self.move_ball();
         self.draw_player(drawer);
         self.draw_opponent(drawer);
         self.draw_ball(drawer);
+    }
+
+    fn move_player_paddle(&mut self) {
+        let (_, _, y) = mouse::get_mouse_state();
+        self.player_paddle_y = y;
     }
 
     // TODO this shouldn't be framerate/vsync dependent.

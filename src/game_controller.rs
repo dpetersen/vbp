@@ -52,8 +52,9 @@ impl GameController {
         y += y_change;
 
         // Wall collision
-        if y > 600 || y < 0 { self.ball_angle *= -1.0 }
-        if y > 600 { y = 600; }
+        let upper_y_limit = 600 - BALL_BREADTH;
+        if y > upper_y_limit || y < 0 { self.ball_angle *= -1.0 }
+        if y > upper_y_limit { y = upper_y_limit; }
         else if y < 0 { y = 0; }
 
         // Paddle collision

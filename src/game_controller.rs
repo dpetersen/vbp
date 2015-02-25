@@ -65,7 +65,10 @@ impl GameController {
     }
 
     fn move_player_paddle(&mut self) {
-        let (_, _, y) = mouse::get_mouse_state();
+        let (_, _, mut y) = mouse::get_mouse_state();
+        if y < 0 { y = 0; }
+        else if y + PADDLE_HEIGHT > 600 { y = 600 - PADDLE_HEIGHT; }
+
         self.player_paddle_y = y;
     }
 

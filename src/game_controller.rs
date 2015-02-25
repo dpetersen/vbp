@@ -36,6 +36,7 @@ impl GameController {
 
     pub fn tick(&mut self, _: &Event, drawer: &mut RenderDrawer) {
         self.move_player_paddle();
+        self.move_opponent_paddle();
         self.move_ball();
         self.draw_player(drawer);
         self.draw_opponent(drawer);
@@ -45,6 +46,11 @@ impl GameController {
     fn move_player_paddle(&mut self) {
         let (_, _, y) = mouse::get_mouse_state();
         self.player_paddle_y = y;
+    }
+
+    fn move_opponent_paddle(&mut self) {
+        let (_, y) = self.ball_position;
+        self.opponent_paddle_y = y - PADDLE_HEIGHT / 2;
     }
 
     // TODO this shouldn't be framerate/vsync dependent.
@@ -70,8 +76,7 @@ impl GameController {
         let player_paddle_x = PADDLE_WALL_PADDING + PADDLE_WIDTH;
         let player_paddle_impacted = x <= player_paddle_x && y >= self.player_paddle_y && y <= self.player_paddle_y + PADDLE_HEIGHT;
         let opponent_paddle_x = 800 - PADDLE_WALL_PADDING - PADDLE_WIDTH - BALL_BREADTH;
-        //let opponent_paddle_impacted = x >= opponent_paddle_x && y >= self.opponent_paddle_y && y <= self.opponent_paddle_y + PADDLE_HEIGHT;
-        let opponent_paddle_impacted = x >= opponent_paddle_x; // Invincible opponent until AI.
+        let opponent_paddle_impacted = x >= opponent_paddle_x && y >= self.opponent_paddle_y && y <= self.opponent_paddle_y + PADDLE_HEIGHT;
         if player_paddle_impacted || opponent_paddle_impacted {
             self.ball_angle = 0.0 - PI - self.ball_angle; 
         }

@@ -1,5 +1,4 @@
-#![feature(core, std_misc)]
-// For to_radians
+#![feature(core, std_misc, old_path)]
 
 use sdl2::{event, render, video};
 use sdl2::event::Event;
@@ -8,11 +7,13 @@ use sdl2::pixels::Color;
 use game_controller::GameController;
 
 extern crate sdl2;
+extern crate sdl2_ttf;
 
 pub mod game_controller;
 
 fn main() {
     sdl2::init(sdl2::INIT_VIDEO);
+    sdl2_ttf::init();
 
     let window = video::Window::new(
         "VBP",
@@ -38,7 +39,7 @@ fn main() {
             Event::Quit{..} | Event::KeyDown{keycode: KeyCode::Escape, ..} => {
                 break;
             }
-            _ => { gc.tick(&e, &mut d); }
+            _ => { gc.tick(&e, &renderer, &mut d); }
         }
         d.present();
     }

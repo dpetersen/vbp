@@ -5,20 +5,29 @@ use sdl2::event::Event;
 use sdl2::mouse;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
-use sdl2::render::RenderDrawer;
+use sdl2::render::{Renderer, RenderDrawer};
+use sdl2_ttf::Font;
 
-const PADDLE_COLOR: Color = Color::RGB(255, 255, 255);
+const SOULLESS_GREY: Color = Color::RGB(175, 175, 175);
+
+const PADDLE_COLOR: Color = SOULLESS_GREY;
 const PADDLE_WIDTH: i32 = 12;
 const PADDLE_HEIGHT: i32 = 64;
 const PADDLE_WALL_PADDING: i32 = 10;
 
-const BALL_COLOR: Color = Color::RGB(175, 175, 175);
+const BALL_COLOR: Color = SOULLESS_GREY;
 const BALL_BREADTH: i32 = 8;
 const BALL_VELOCITY: f64 = 10.0;
 const BALL_INITIAL_ANGLE_DEGREES: i32 = 45;
 const BALL_START_POSITION: (i32, i32) = (800 / 2 - BALL_BREADTH / 2, 600 / 2 - BALL_BREADTH / 2);
 
+const SCORE_TOP_PADDING: i32 = 10;
+const SCORE_COLOR: Color = SOULLESS_GREY;
+const SCORE_FONT_SIZE: isize = 64;
+
 pub struct GameController {
+    score_font: Font,
+
     ball_position: (i32, i32),
     ball_angle: f64,
 
@@ -31,7 +40,11 @@ pub struct GameController {
 
 impl GameController {
     pub fn new() -> GameController {
+        let score_font_path = &Path::new("art/alterebro-pixel-font.ttf");
+        let score_font = Font::from_file(score_font_path, SCORE_FONT_SIZE).unwrap();
+
         return GameController{
+            score_font: score_font,
             ball_position: BALL_START_POSITION,
             ball_angle: (BALL_INITIAL_ANGLE_DEGREES as f64).to_radians(),
             player_paddle_y: 280,
@@ -41,10 +54,11 @@ impl GameController {
         }
     }
 
-    pub fn tick(&mut self, _: &Event, drawer: &mut RenderDrawer) {
+    pub fn tick(&mut self, _: &Event, renderer: &Renderer, drawer: &mut RenderDrawer) {
         self.move_player_paddle();
         self.move_opponent_paddle();
         self.move_ball();
+        self.draw_scores(&renderer, drawer);
         self.draw_player(drawer);
         self.draw_opponent(drawer);
         self.draw_ball(drawer);
@@ -80,6 +94,8 @@ impl GameController {
         // Paddle collision
         // TODO ball dimensions aren't respected. Left side of ball hits on the left, right side of
         // ball hits on the right. Also need to reset ball x on impact.
+        // TODO There's also a bug there the ball can be BALL_BREADTH height above the paddle but
+        // still count as a miss. Any part of the ball on the paddle should probably be a save.
         let player_paddle_x = PADDLE_WALL_PADDING + PADDLE_WIDTH;
         let player_paddle_impacted = x <= player_paddle_x && y >= self.player_paddle_y && y <= self.player_paddle_y + PADDLE_HEIGHT;
         let opponent_paddle_x = 800 - PADDLE_WALL_PADDING - PADDLE_WIDTH - BALL_BREADTH;
@@ -96,13 +112,25 @@ impl GameController {
             if x < player_paddle_x { self.opponent_score += 1; }
             else if x > opponent_paddle_x { self.player_score += 1; }
 
-            println!("Score - Player: {}, Opponent: {}", self.player_score, self.opponent_score);
-
             self.ball_position = BALL_START_POSITION;
             self.ball_angle = 45.0.to_radians();
         } else {
             self.ball_position = (x, y);
         }
+    }
+
+    fn draw_scores(&self, r: &Renderer, d: &mut RenderDrawer) {
+        let third = 800 / 3;
+        self.draw_score(r, d, self.opponent_score, third);
+        self.draw_score(r, d, self.player_score, third * 2);
+    }
+
+    fn draw_score(&self, r: &Renderer, d: &mut RenderDrawer, score: i32, x: i32) {
+        let surface = self.score_font.render_str_blended(&score.to_string(), SCORE_COLOR).unwrap();
+        let t = r.create_texture_from_surface(&surface).unwrap();
+        let q = t.query();
+        let b = Rect::new(x - q.width / 2, SCORE_TOP_PADDING, q.width, q.height);
+        d.copy(&t, None, Some(b));
     }
 
     fn draw_player(&self, d: &mut RenderDrawer) {
@@ -115,14 +143,14 @@ impl GameController {
 
     fn draw_box(&self, d: &mut RenderDrawer, x: i32, y: i32) {
         d.set_draw_color(PADDLE_COLOR);
-        let r = Rect{x: x, y: y, w: PADDLE_WIDTH, h: PADDLE_HEIGHT};
+        let r = Rect::new(x, y, PADDLE_WIDTH, PADDLE_HEIGHT);
         d.fill_rect(r);
      }
 
     fn draw_ball(&self, d: &mut RenderDrawer) {
         d.set_draw_color(BALL_COLOR);
         let (x, y) = self.ball_position;
-        let r = Rect{x: x, y: y, w: BALL_BREADTH, h: BALL_BREADTH};
+        let r = Rect::new(x, y, BALL_BREADTH, BALL_BREADTH);
         d.fill_rect(r);
     }
 }

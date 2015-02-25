@@ -7,30 +7,37 @@ use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::render::RenderDrawer;
 
-static PADDLE_COLOR: Color = Color::RGB(255, 255, 255);
-static PADDLE_WIDTH: i32 = 12;
-static PADDLE_HEIGHT: i32 = 64;
-static PADDLE_WALL_PADDING: i32 = 10;
+const PADDLE_COLOR: Color = Color::RGB(255, 255, 255);
+const PADDLE_WIDTH: i32 = 12;
+const PADDLE_HEIGHT: i32 = 64;
+const PADDLE_WALL_PADDING: i32 = 10;
 
-static BALL_COLOR: Color = Color::RGB(175, 175, 175);
-static BALL_BREADTH: i32 = 8;
-static BALL_VELOCITY: f64 = 10.0;
-static BALL_INITIAL_ANGLE_DEGREES: i32 = 45;
+const BALL_COLOR: Color = Color::RGB(175, 175, 175);
+const BALL_BREADTH: i32 = 8;
+const BALL_VELOCITY: f64 = 10.0;
+const BALL_INITIAL_ANGLE_DEGREES: i32 = 45;
+const BALL_START_POSITION: (i32, i32) = (800 / 2 - BALL_BREADTH / 2, 600 / 2 - BALL_BREADTH / 2);
 
 pub struct GameController {
     ball_position: (i32, i32),
     ball_angle: f64,
+
     player_paddle_y: i32,
-    opponent_paddle_y: i32
+    opponent_paddle_y: i32,
+
+    player_score: i32,
+    opponent_score: i32
 }
 
 impl GameController {
     pub fn new() -> GameController {
         return GameController{
-            ball_position: (800 / 2 - BALL_BREADTH / 2, 600 / 2 - BALL_BREADTH / 2),
+            ball_position: BALL_START_POSITION,
             ball_angle: (BALL_INITIAL_ANGLE_DEGREES as f64).to_radians(),
             player_paddle_y: 280,
             opponent_paddle_y: 10,
+            player_score: 0,
+            opponent_score: 0
         }
     }
 
@@ -77,11 +84,25 @@ impl GameController {
         let player_paddle_impacted = x <= player_paddle_x && y >= self.player_paddle_y && y <= self.player_paddle_y + PADDLE_HEIGHT;
         let opponent_paddle_x = 800 - PADDLE_WALL_PADDING - PADDLE_WIDTH - BALL_BREADTH;
         let opponent_paddle_impacted = x >= opponent_paddle_x && y >= self.opponent_paddle_y && y <= self.opponent_paddle_y + PADDLE_HEIGHT;
+
+        // Reflect and tweak ball position.
         if player_paddle_impacted || opponent_paddle_impacted {
             self.ball_angle = 0.0 - PI - self.ball_angle; 
         }
+        if player_paddle_impacted { x = player_paddle_x; }
+        else if opponent_paddle_impacted { x = opponent_paddle_x; }
 
-        self.ball_position = (x, y);
+        if x < player_paddle_x || x > opponent_paddle_x {
+            if x < player_paddle_x { self.opponent_score += 1; }
+            else if x > opponent_paddle_x { self.player_score += 1; }
+
+            println!("Score - Player: {}, Opponent: {}", self.player_score, self.opponent_score);
+
+            self.ball_position = BALL_START_POSITION;
+            self.ball_angle = 45.0.to_radians();
+        } else {
+            self.ball_position = (x, y);
+        }
     }
 
     fn draw_player(&self, d: &mut RenderDrawer) {

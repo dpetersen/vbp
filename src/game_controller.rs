@@ -108,10 +108,8 @@ impl GameController {
         // Paddle collision
         // TODO ball dimensions aren't respected. Left side of ball hits on the left, right side of
         // ball hits on the right. Also need to reset ball x on impact.
-        // TODO There's also a bug there the ball can be BALL_BREADTH height above the paddle but
-        // still count as a miss. Any part of the ball on the paddle should probably be a save.
         let player_paddle_x = PADDLE_WALL_PADDING + PADDLE_WIDTH;
-        let player_paddle_impacted = x <= player_paddle_x && y >= self.player_paddle_y && y <= self.player_paddle_y + PADDLE_HEIGHT;
+        let player_paddle_impacted = x <= player_paddle_x && y + BALL_BREADTH >= self.player_paddle_y && y <= self.player_paddle_y + PADDLE_HEIGHT;
         let opponent_paddle_x = self.window_width - PADDLE_WALL_PADDING - PADDLE_WIDTH - BALL_BREADTH;
         let opponent_paddle_impacted = x >= opponent_paddle_x && y >= self.opponent_paddle_y && y <= self.opponent_paddle_y + PADDLE_HEIGHT;
 

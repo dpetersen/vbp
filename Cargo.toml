@@ -9,3 +9,6 @@ git = "https://github.com/AngryLawyer/rust-sdl2.git"
 
 [dependencies.sdl2_ttf]
 git = "https://github.com/TheNeikos/rust-sdl2_ttf.git"
+
+[dependencies.sdl2_mixer]
+git = "https://github.com/andelf/rust-sdl2_mixer"

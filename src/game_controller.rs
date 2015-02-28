@@ -6,6 +6,7 @@ use sdl2::mouse;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::render::{Renderer, RenderDrawer};
+use sdl2_mixer::{Channel, Chunk};
 use sdl2_ttf::Font;
 
 const SOULLESS_GREY: Color = Color::RGB(175, 175, 175);
@@ -24,6 +25,10 @@ const SCORE_COLOR: Color = SOULLESS_GREY;
 const SCORE_FONT_SIZE: isize = 64;
 
 pub struct GameController {
+    channel: Channel,
+    boop: Chunk,
+    lose_point: Chunk,
+
     window_width: i32,
     window_height: i32,
 
@@ -40,11 +45,16 @@ pub struct GameController {
 }
 
 impl GameController {
-    pub fn new(window_width: i32, window_height: i32) -> GameController {
+    pub fn new(window_width: i32, window_height: i32, channel: Channel) -> GameController {
         let score_font_path = &Path::new("art/alterebro-pixel-font.ttf");
         let score_font = Font::from_file(score_font_path, SCORE_FONT_SIZE).unwrap();
+        let boop = Chunk::from_file(&Path::new("art/boop.wav")).unwrap();
+        let lose_point = Chunk::from_file(&Path::new("art/lose_point.wav")).unwrap();
 
         return GameController{
+            channel: channel,
+            boop: boop,
+            lose_point: lose_point,
             window_width: window_width,
             window_height: window_height,
             score_font: score_font,
@@ -101,7 +111,10 @@ impl GameController {
 
         // Wall collision
         let upper_y_limit = self.window_height - BALL_BREADTH;
-        if y > upper_y_limit || y < 0 { self.ball_angle *= -1.0 }
+        if y > upper_y_limit || y < 0 {
+            self.play_sound(&self.boop);
+            self.ball_angle *= -1.0
+        }
         if y > upper_y_limit { y = upper_y_limit; }
         else if y < 0 { y = 0; }
 
@@ -115,6 +128,7 @@ impl GameController {
 
         // Reflect and tweak ball position.
         if player_paddle_impacted || opponent_paddle_impacted {
+            self.play_sound(&self.boop);
             self.ball_angle = 0.0 - PI - self.ball_angle; 
         }
         if player_paddle_impacted { x = player_paddle_x; }
@@ -124,6 +138,7 @@ impl GameController {
             if x < player_paddle_x { self.opponent_score += 1; }
             else if x > opponent_paddle_x { self.player_score += 1; }
 
+            self.play_sound(&self.lose_point);
             self.restart_game();
         } else {
             self.ball_position = (x, y);
@@ -163,5 +178,9 @@ impl GameController {
         let (x, y) = self.ball_position;
         let r = Rect::new(x, y, BALL_BREADTH, BALL_BREADTH);
         d.fill_rect(r);
+    }
+
+    fn play_sound(&self, s: &Chunk) {
+        let _ = self.channel.play(s, 0);
     }
 }

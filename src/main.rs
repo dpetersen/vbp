@@ -36,6 +36,9 @@ fn main() {
         render::ACCELERATED | render::PRESENTVSYNC
     ).unwrap();
 
+    // "Capture" mouse so cursor isn't shown and can't leave.
+    sdl2::mouse::set_relative_mouse_mode(true);
+
     // TODO Don't ignore the SdlResult! Demo uses try!... Any unwraps are bad.
     let _ = sdl2_mixer::open_audio(DEFAULT_FREQUENCY, AUDIO_S16LSB, 2, 2048);
     sdl2_mixer::allocate_channels(1);
